@@ -1,0 +1,25 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".LoggerActivity" >
+
+    <LinearLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+    </LinearLayout>
+
+    <fragment
+        android:id="@+id/logger_fragment"
+        android:name="at.jku.tfeichtinger.sensorlogger.activities.LoggerFragment"
+        android:layout_width="0dp"
+        android:layout_height="match_parent" />
+
+    <fragment
+        android:id="@+id/files_fragment"
+        android:name="at.jku.tfeichtinger.sensorlogger.activities.FilesFragment"
+        android:layout_width="0dp"
+        android:layout_height="match_parent" />
+
+</RelativeLayout>

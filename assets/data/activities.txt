@@ -1,0 +1,8 @@
+Walk
+Jog
+Run
+Cycle
+Sit
+Stand
+Stairs up
+Stairs down
