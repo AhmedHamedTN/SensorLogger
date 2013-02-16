@@ -3,10 +3,12 @@ package at.jku.tfeichtinger.sensorlogger.activities;
 import java.sql.SQLException;
 import java.util.List;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
@@ -17,13 +19,16 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.TextView;
 import at.jku.tfeichtinger.sensorlogger.R;
@@ -43,11 +48,10 @@ public class LoggerFragment extends Fragment {
 	private Messenger sensorLoggerService;
 	/** The grid adapter. */
 	private ActivityLabelAdapter adapter;
+	/** The database helper. */
+	private DatabaseHelper dbHelper;
 
-	/* UI stuff ----------------------------------------------- */
 	private GridView activityLabelGrid;
-	/** The button for stopping the logging process. */
-	private Button stopButton;
 
 	private final ServiceConnection sensorLoggerServiceConnection = new ServiceConnection() {
 
@@ -70,19 +74,6 @@ public class LoggerFragment extends Fragment {
 		}
 	};
 
-	private final OnClickListener onStopButtonClickListener = new OnClickListener() {
-
-		@Override
-		public void onClick(final View v) {
-			try {
-				final Message message = Message.obtain(null, SensorLoggerService.MSG_STOP_LOGGING);
-				sensorLoggerService.send(message);
-			} catch (final RemoteException e) {
-				Log.e(TAG, e.getMessage(), e);
-			}
-		}
-	};
-
 	private final OnItemClickListener onGridItemClickListener = new OnItemClickListener() {
 		@Override
 		public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
@@ -102,22 +93,41 @@ public class LoggerFragment extends Fragment {
 		}
 	};
 
-	private void fillGrid() throws SQLException {
-		final DatabaseHelper dbHelper = DatabaseHelper.getInstance();
+	private void createAddLabelDialog() {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		final LayoutInflater inflater = getActivity().getLayoutInflater();
 
-		final List<ActivityLabel> allLabels = dbHelper.getActivityLabelDao().queryForAll();
-		adapter = new ActivityLabelAdapter(getActivity(), allLabels);
-		activityLabelGrid.setAdapter(adapter);
+		final View dialogView = inflater.inflate(R.layout.dialog_add_label, null);
+		final EditText labelText = (EditText) dialogView.findViewById(R.id.labelname);
+
+		builder.setView(dialogView)
+		// Add action buttons
+				.setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(final DialogInterface dialog, final int id) {
+						final ActivityLabel label = new ActivityLabel(labelText.getText().toString());
+						try {
+							getDbHelper().getActivityLabelDao().create(label);
+						} catch (SQLException e) {
+						}
+					}
+				}).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+					public void onClick(final DialogInterface dialog, final int id) {
+						dialog.cancel();
+
+					}
+				});
+
+		// create alert dialog
+		AlertDialog alertDialog = builder.create();
+		// show it
+		alertDialog.show();
 	}
 
-	private void showStatus(final Bundle data) {
-		final ServiceState status = SensorLoggerService.ServiceState.valueOf(data
-				.getString(SensorLoggerService.DATA_STATUS));
-		if (status == ServiceState.LOGGING) {
-			adapter.setHighlightedId(Integer.parseInt(data.getString(SensorLoggerService.DATA_ACTIVITY_ID)));
-		} else {
-			adapter.disableHightlight();
-		}
+	private void doBindService() {
+		getActivity().bindService(new Intent(getActivity(), SensorLoggerService.class), sensorLoggerServiceConnection,
+				Context.BIND_AUTO_CREATE | Service.START_STICKY);
+		mIsBound = true;
 	}
 
 	void doUnbindService() {
@@ -128,25 +138,17 @@ public class LoggerFragment extends Fragment {
 		}
 	}
 
-	private void doBindService() {
-		getActivity().bindService(new Intent(getActivity(), SensorLoggerService.class), sensorLoggerServiceConnection,
-				Context.BIND_AUTO_CREATE | Service.START_STICKY);
-		mIsBound = true;
+	private void fillGrid() throws SQLException {
+		final List<ActivityLabel> allLabels = getDbHelper().getActivityLabelDao().queryForAll();
+		adapter = new ActivityLabelAdapter(getActivity(), allLabels);
+		activityLabelGrid.setAdapter(adapter);
 	}
 
-	/* Lifecycle Methods -------------------------------------------- */
-
-	@Override
-	public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
-		final View view = inflater.inflate(R.layout.fragment_logger, container, false);
-
-		activityLabelGrid = (GridView) view.findViewById(R.id.activities_grid);
-		activityLabelGrid.setOnItemClickListener(onGridItemClickListener);
-
-		stopButton = (Button) view.findViewById(R.id.stopButton);
-		stopButton.setOnClickListener(onStopButtonClickListener);
-
-		return view;
+	private DatabaseHelper getDbHelper() {
+		if (dbHelper == null) {
+			dbHelper = DatabaseHelper.getInstance();
+		}
+		return dbHelper;
 	}
 
 	@Override
@@ -156,9 +158,51 @@ public class LoggerFragment extends Fragment {
 	}
 
 	@Override
+	public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
+		inflater.inflate(R.menu.activity_logger, menu);
+		super.onCreateOptionsMenu(menu, inflater);
+	}
+
+	@Override
+	public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
+		final View view = inflater.inflate(R.layout.fragment_logger, container, false);
+
+		activityLabelGrid = (GridView) view.findViewById(R.id.activities_grid);
+		activityLabelGrid.setOnItemClickListener(onGridItemClickListener);
+
+		setHasOptionsMenu(true);
+
+		return view;
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		doUnbindService();
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(final MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.menu_stop_logging:
+			stopLogging();
+			return true;
+		case R.id.menu_add_label:
+			createAddLabelDialog();
+			refreshGrid();
+			return true;
+		}
+		return false;
+	}
+
+	@Override
 	public void onResume() {
 		super.onResume();
 
+		refreshGrid();
+	}
+
+	private void refreshGrid() {
 		try {
 			fillGrid();
 		} catch (final SQLException e) {
@@ -167,10 +211,22 @@ public class LoggerFragment extends Fragment {
 		}
 	}
 
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		doUnbindService();
+	private void showStatus(final Bundle data) {
+		final ServiceState status = SensorLoggerService.ServiceState.valueOf(data.getString(SensorLoggerService.DATA_STATUS));
+		if (status == ServiceState.LOGGING) {
+			adapter.setHighlightedId(Integer.parseInt(data.getString(SensorLoggerService.DATA_ACTIVITY_ID)));
+		} else {
+			adapter.disableHightlight();
+		}
+	}
+
+	private void stopLogging() {
+		try {
+			final Message message = Message.obtain(null, SensorLoggerService.MSG_STOP_LOGGING);
+			sensorLoggerService.send(message);
+		} catch (final RemoteException e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
 	}
 
 	private class ActivityLabelAdapter extends BaseAdapter {
@@ -183,6 +239,11 @@ public class LoggerFragment extends Fragment {
 		public ActivityLabelAdapter(final Context context, final List<ActivityLabel> labels) {
 			this.context = context;
 			this.labels = labels;
+		}
+
+		public void disableHightlight() {
+			highlightedId = null;
+			notifyDataSetChanged();
 		}
 
 		@Override
@@ -220,13 +281,8 @@ public class LoggerFragment extends Fragment {
 			return v;
 		}
 
-		protected void setHighlightedId(int id) {
+		protected void setHighlightedId(final int id) {
 			highlightedId = id;
-			notifyDataSetChanged();
-		}
-
-		public void disableHightlight() {
-			highlightedId = null;
 			notifyDataSetChanged();
 		}
 	}

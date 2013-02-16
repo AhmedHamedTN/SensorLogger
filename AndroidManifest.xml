@@ -19,7 +19,8 @@
         android:theme="@android:style/Theme.Holo" >
         <activity
             android:name="at.jku.tfeichtinger.sensorlogger.activities.LoggerActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:uiOptions="splitActionBarWhenNarrow">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

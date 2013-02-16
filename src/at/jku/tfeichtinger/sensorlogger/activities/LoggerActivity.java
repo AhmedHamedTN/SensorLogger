@@ -7,6 +7,8 @@ import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Toast;
 import at.jku.tfeichtinger.sensorlogger.R;
 import at.jku.tfeichtinger.sensorlogger.database.DatabaseHelper;
 
@@ -21,6 +23,8 @@ public class LoggerActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 
 		final ActionBar bar = getActionBar();
 		bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+		bar.setDisplayShowTitleEnabled(false);
+		bar.setDisplayShowHomeEnabled(false);
 
 		Tab loggerTag = bar.newTab().setText(R.string.tab_logger)
 				.setTabListener(new TabListener<LoggerFragment>(this, "tab_logger", LoggerFragment.class));
@@ -28,16 +32,9 @@ public class LoggerActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 		Tab filesTab = bar.newTab().setText(R.string.tab_files)
 				.setTabListener(new TabListener<FilesFragment>(this, "tab_files", FilesFragment.class));
 		bar.addTab(filesTab);
-
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(final Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.activity_logger, menu);
-		return true;
-	}
-
+	
 	protected class TabListener<T extends Fragment> implements ActionBar.TabListener {
 		private Fragment fragment;
 		private final Class<T> clazz;

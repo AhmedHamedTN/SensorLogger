@@ -16,28 +16,27 @@ public final class R {
         public static final int ic_launcher=0x7f020002;
     }
     public static final class id {
-        public static final int activities_grid=0x7f080008;
-        public static final int activitylabel_cell_name=0x7f080003;
-        public static final int filelistitem_file_date=0x7f080006;
-        public static final int filelistitem_file_name=0x7f080004;
-        public static final int filelistitem_file_size=0x7f080005;
-        public static final int filesList=0x7f080007;
-        public static final int files_fragment=0x7f080002;
+        public static final int activities_grid=0x7f080007;
+        public static final int activitylabel_cell_name=0x7f080001;
+        public static final int filelistitem_file_date=0x7f080005;
+        public static final int filelistitem_file_name=0x7f080003;
+        public static final int filelistitem_file_size=0x7f080004;
+        public static final int filesList=0x7f080006;
         public static final int fragment_container=0x7f080000;
-        public static final int logger_fragment=0x7f080001;
-        public static final int menu_addlabel=0x7f08000b;
-        public static final int menu_delete=0x7f08000c;
-        public static final int menu_selectall=0x7f08000d;
-        public static final int menu_settings=0x7f08000a;
-        public static final int menu_share=0x7f08000e;
-        public static final int stopButton=0x7f080009;
+        public static final int labelname=0x7f080002;
+        public static final int menu_add_label=0x7f080008;
+        public static final int menu_delete=0x7f08000a;
+        public static final int menu_selectall=0x7f08000b;
+        public static final int menu_share=0x7f08000c;
+        public static final int menu_stop_logging=0x7f080009;
     }
     public static final class layout {
         public static final int activity_logger=0x7f030000;
         public static final int activitylabel_cell=0x7f030001;
-        public static final int file_list_item=0x7f030002;
-        public static final int fragment_files=0x7f030003;
-        public static final int fragment_logger=0x7f030004;
+        public static final int dialog_add_label=0x7f030002;
+        public static final int file_list_item=0x7f030003;
+        public static final int fragment_files=0x7f030004;
+        public static final int fragment_logger=0x7f030005;
     }
     public static final class menu {
         public static final int activity_logger=0x7f070000;
@@ -47,15 +46,33 @@ public final class R {
         public static final int ormlite_config=0x7f040000;
     }
     public static final class string {
+        /**  General 
+         */
         public static final int app_name=0x7f050000;
-        public static final int logger_service_started=0x7f050006;
-        public static final int menu_addlabel=0x7f050002;
-        public static final int menu_delete=0x7f050003;
-        public static final int menu_selectall=0x7f050005;
-        public static final int menu_settings=0x7f050001;
-        public static final int menu_share=0x7f050004;
-        public static final int tab_files=0x7f050008;
-        public static final int tab_logger=0x7f050007;
+        public static final int cancel=0x7f050003;
+        public static final int create=0x7f050002;
+        /**  Dialogs 
+         */
+        public static final int dialog_create_label=0x7f050008;
+        /**  Hints 
+         */
+        public static final int hint_label=0x7f050007;
+        public static final int logger_service_started=0x7f050001;
+        public static final int menu_add_label=0x7f05000a;
+        public static final int menu_delete=0x7f05000c;
+        public static final int menu_selectall=0x7f05000e;
+        /**  Menu strings 
+         */
+        public static final int menu_settings=0x7f050009;
+        public static final int menu_share=0x7f05000d;
+        public static final int menu_stop_logging=0x7f05000b;
+        public static final int tab_files=0x7f050005;
+        /**  Tab headings 
+         */
+        public static final int tab_logger=0x7f050004;
+        /**  Toasts 
+         */
+        public static final int toast_logging_stopped=0x7f050006;
     }
     public static final class style {
         /** 

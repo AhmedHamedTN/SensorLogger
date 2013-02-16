@@ -29,6 +29,7 @@ import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.util.Log;
+import android.widget.Toast;
 import at.jku.tfeichtinger.sensorlogger.R;
 import at.jku.tfeichtinger.sensorlogger.activities.LoggerActivity;
 
@@ -94,17 +95,22 @@ public class SensorLoggerService extends Service {
 
 			int linearAccSensor = Sensor.TYPE_LINEAR_ACCELERATION;
 			int gravitySensor = Sensor.TYPE_GRAVITY;
-			sensorMap.put(linearAccSensor, new BufferedWriter(new FileWriter(getLogFile(linearAccSensor))));
-			sensorMap.put(gravitySensor, new BufferedWriter(new FileWriter(getLogFile(gravitySensor))));
+			sensorMap.put(linearAccSensor, new BufferedWriter(new FileWriter(
+					getLogFile(linearAccSensor))));
+			sensorMap.put(gravitySensor, new BufferedWriter(new FileWriter(
+					getLogFile(gravitySensor))));
 
 			for (BufferedWriter writer : sensorMap.values()) {
-				writer.write("#" + currentActivity.toLowerCase().replace(" ", "") + "\n");
+				writer.write("#"
+						+ currentActivity.toLowerCase().replace(" ", "") + "\n");
 				writer.write("time[ms], x-axis[m/s^2], y-axis[m/s^2], z-axis[m/s^2]\n");
 			}
 
-			mSensorManager.registerListener(sensorEventListener, mSensorManager.getSensorList(linearAccSensor).get(0),
+			mSensorManager.registerListener(sensorEventListener, mSensorManager
+					.getSensorList(linearAccSensor).get(0),
 					SensorManager.SENSOR_DELAY_FASTEST);
-			mSensorManager.registerListener(sensorEventListener, mSensorManager.getSensorList(gravitySensor).get(0),
+			mSensorManager.registerListener(sensorEventListener, mSensorManager
+					.getSensorList(gravitySensor).get(0),
 					SensorManager.SENSOR_DELAY_FASTEST);
 
 			state = ServiceState.LOGGING;
@@ -121,7 +127,8 @@ public class SensorLoggerService extends Service {
 			}
 
 			// create new log file
-			final String fileName = getFileName(mSensorManager.getSensorList(sensorType).get(0).getName());
+			final String fileName = getFileName(mSensorManager
+					.getSensorList(sensorType).get(0).getName());
 			final File file = new File(path, fileName);
 			if (!file.exists()) {
 				file.createNewFile();
@@ -131,33 +138,43 @@ public class SensorLoggerService extends Service {
 		}
 
 		private void stopLogging() {
-			state = ServiceState.STOPPED;
-			// first stop logging new values
-			mSensorManager.unregisterListener(sensorEventListener);
-			
-			//write files
-			for (BufferedWriter writer : sensorMap.values()) {
-				try {
-					writer.flush();
-					writer.close();
-				} catch (IOException e) {
-					Log.e(TAG, e.getMessage(), e);
+			if (state != ServiceState.STOPPED) {
+				state = ServiceState.STOPPED;
+				// first stop logging new values
+				mSensorManager.unregisterListener(sensorEventListener);
+
+				// write files
+				for (BufferedWriter writer : sensorMap.values()) {
+					try {
+						writer.flush();
+						writer.close();
+					} catch (IOException e) {
+						Log.e(TAG, e.getMessage(), e);
+					}
 				}
+
+				// remove notification (using the unique id of our string that
+				// was
+				// used when we created the notification)
+				mNotificationManager.cancel(R.string.logger_service_started);
+
+				Toast.makeText(getApplicationContext(),
+						R.string.toast_logging_stopped, Toast.LENGTH_SHORT)
+						.show();
 			}
-			
-			// remove notification (using the unique id of our string that was
-			// used when we created the notification)
-			mNotificationManager.cancel(R.string.logger_service_started);
 		}
 
 		private String getFileName(final String name) {
-			final String filename = getLogPath() + "-" + name.toLowerCase().replace(" ", "");
+			final String filename = getLogPath() + "-"
+					+ name.toLowerCase().replace(" ", "");
 			return filename + ".csv";
 		}
 
 		private String getLogPath() {
-			final SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd-HHmmssSSS");
-			String path = dateFormat.format(startTime) + "-" + currentActivity.toLowerCase().replace(" ", "");
+			final SimpleDateFormat dateFormat = new SimpleDateFormat(
+					"yyMMdd-HHmmssSSS");
+			String path = dateFormat.format(startTime) + "-"
+					+ currentActivity.toLowerCase().replace(" ", "");
 			return path;
 		}
 	}
@@ -266,18 +283,20 @@ public class SensorLoggerService extends Service {
 		 * </pre>
 		 */
 		private final int CONVERSION_FACTOR = 1000 * 1000;
-		
+
 		/**
 		 * 
 		 */
-		private final DecimalFormat NUMBER_FORMATTER = new DecimalFormat("#.#####");
+		private final DecimalFormat NUMBER_FORMATTER = new DecimalFormat(
+				"#.#####");
 
 		@Override
 		public void onSensorChanged(final SensorEvent event) {
 			// Log.d(TAG, "onSensorChanged called:" + toCSVString(event));
 			try {
 				// get the corresponding queue
-				final BufferedWriter writer = sensorMap.get(event.sensor.getType());
+				final BufferedWriter writer = sensorMap.get(event.sensor
+						.getType());
 				if (state == ServiceState.LOGGING) {
 					writer.write(toCSVString(event));
 				}
@@ -298,9 +317,9 @@ public class SensorLoggerService extends Service {
 		 * @return
 		 */
 		private String toCSVString(final SensorEvent event) {
-			return ((event.timestamp / CONVERSION_FACTOR) - referenceTime) + "," 
-					+ NUMBER_FORMATTER.format(event.values[0]) + ","
-					+ NUMBER_FORMATTER.format(event.values[1]) + "," 
+			return ((event.timestamp / CONVERSION_FACTOR) - referenceTime)
+					+ "," + NUMBER_FORMATTER.format(event.values[0]) + ","
+					+ NUMBER_FORMATTER.format(event.values[1]) + ","
 					+ NUMBER_FORMATTER.format(event.values[2]) + "\n";
 		}
 	};
@@ -371,20 +390,23 @@ public class SensorLoggerService extends Service {
 		final CharSequence notificationText = getText(R.string.logger_service_started);
 
 		// set the icon, scrolling text and timestamp
-		final Notification notification = new Notification(R.drawable.ic_launcher, notificationText,
+		final Notification notification = new Notification(
+				R.drawable.ic_launcher, notificationText,
 				System.currentTimeMillis());
 		notification.flags |= Notification.FLAG_NO_CLEAR;
 		notification.flags |= Notification.FLAG_ONGOING_EVENT;
 
 		// the PendingIntent used to launch the logger activity if the user
 		// selects this notification
-		final PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, LoggerActivity.class),
-				0);
+		final PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+				new Intent(this, LoggerActivity.class), 0);
 
-		notification.setLatestEventInfo(this, getText(R.string.app_name), notificationText, pendingIntent);
+		notification.setLatestEventInfo(this, getText(R.string.app_name),
+				notificationText, pendingIntent);
 
 		// send the notification. string id used because its a unique number.
-		mNotificationManager.notify(R.string.logger_service_started, notification);
+		mNotificationManager.notify(R.string.logger_service_started,
+				notification);
 	}
 
 }
