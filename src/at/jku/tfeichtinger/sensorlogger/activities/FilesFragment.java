@@ -6,8 +6,6 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
@@ -155,6 +153,19 @@ public class FilesFragment extends Fragment {
 		}
 	}
 
+	private long getDirectorySize(File dir){
+		if (!dir.isDirectory()){
+			return 0;
+		}
+
+		long size = 0;
+		for (File f : dir.listFiles()){
+			size += f.length();
+		}
+
+		return size;
+	}
+
 	public String readableFileSize(long size) {
 		if (size <= 0)
 			return "0";
@@ -186,10 +197,10 @@ public class FilesFragment extends Fragment {
 					nameView.setText(f.getName().split("-")[2]);
 				}
 
-				// show file size
+				// show log size
 				final TextView sizeView = (TextView) convertView.findViewById(R.id.filelistitem_file_size);
 				if (sizeView != null) {
-					sizeView.setText(readableFileSize(f.length()));
+					sizeView.setText(readableFileSize(getDirectorySize(f)));
 				}
 
 				// show a the creation date

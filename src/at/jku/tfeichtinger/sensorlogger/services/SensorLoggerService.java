@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -133,6 +134,8 @@ public class SensorLoggerService extends Service {
 			state = ServiceState.STOPPED;
 			// first stop logging new values
 			mSensorManager.unregisterListener(sensorEventListener);
+			
+			//write files
 			for (BufferedWriter writer : sensorMap.values()) {
 				try {
 					writer.flush();
@@ -141,6 +144,7 @@ public class SensorLoggerService extends Service {
 					Log.e(TAG, e.getMessage(), e);
 				}
 			}
+			
 			// remove notification (using the unique id of our string that was
 			// used when we created the notification)
 			mNotificationManager.cancel(R.string.logger_service_started);
@@ -261,7 +265,12 @@ public class SensorLoggerService extends Service {
 		 * milli = 10^-3
 		 * </pre>
 		 */
-		private final static int CONVERSION_FACTOR = 1000 * 1000;
+		private final int CONVERSION_FACTOR = 1000 * 1000;
+		
+		/**
+		 * 
+		 */
+		private final DecimalFormat NUMBER_FORMATTER = new DecimalFormat("#.#####");
 
 		@Override
 		public void onSensorChanged(final SensorEvent event) {
@@ -289,8 +298,10 @@ public class SensorLoggerService extends Service {
 		 * @return
 		 */
 		private String toCSVString(final SensorEvent event) {
-			return (event.timestamp / CONVERSION_FACTOR) - referenceTime + "," + event.values[0] + ","
-					+ event.values[1] + "," + event.values[2] + "\n";
+			return ((event.timestamp / CONVERSION_FACTOR) - referenceTime) + "," 
+					+ NUMBER_FORMATTER.format(event.values[0]) + ","
+					+ NUMBER_FORMATTER.format(event.values[1]) + "," 
+					+ NUMBER_FORMATTER.format(event.values[2]) + "\n";
 		}
 	};
 

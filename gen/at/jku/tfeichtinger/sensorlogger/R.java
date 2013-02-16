@@ -25,10 +25,11 @@ public final class R {
         public static final int files_fragment=0x7f080002;
         public static final int fragment_container=0x7f080000;
         public static final int logger_fragment=0x7f080001;
-        public static final int menu_delete=0x7f08000b;
-        public static final int menu_selectall=0x7f08000c;
+        public static final int menu_addlabel=0x7f08000b;
+        public static final int menu_delete=0x7f08000c;
+        public static final int menu_selectall=0x7f08000d;
         public static final int menu_settings=0x7f08000a;
-        public static final int menu_share=0x7f08000d;
+        public static final int menu_share=0x7f08000e;
         public static final int stopButton=0x7f080009;
     }
     public static final class layout {
@@ -47,11 +48,11 @@ public final class R {
     }
     public static final class string {
         public static final int app_name=0x7f050000;
-        public static final int hello_world=0x7f050001;
         public static final int logger_service_started=0x7f050006;
+        public static final int menu_addlabel=0x7f050002;
         public static final int menu_delete=0x7f050003;
         public static final int menu_selectall=0x7f050005;
-        public static final int menu_settings=0x7f050002;
+        public static final int menu_settings=0x7f050001;
         public static final int menu_share=0x7f050004;
         public static final int tab_files=0x7f050008;
         public static final int tab_logger=0x7f050007;
