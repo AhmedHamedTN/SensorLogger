@@ -1,5 +1,6 @@
 package at.jku.tfeichtinger.sensorlogger.activities;
 
+import java.lang.ref.WeakReference;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -43,11 +44,11 @@ public class LoggerFragment extends Fragment {
 	private static final String TAG = LoggerFragment.class.getCanonicalName();
 
 	/** A messenger for receiving messages from the service. */
-	private final Messenger callbackMessenger = new Messenger(new CallbackHandler());
+	private final Messenger callbackMessenger = new Messenger(new CallbackHandler(this));
 	/** Indicates whether the service is bound to this activity. */
 	private boolean mIsBound;
 	/** A messenger for sending messages to the service. */
-	private Messenger sensorLoggerService;
+	private Messenger sensorLoggerServiceMessenger;
 	/** The grid adapter. */
 	private ActivityLabelAdapter adapter;
 	/** The database helper. */
@@ -59,12 +60,12 @@ public class LoggerFragment extends Fragment {
 
 		@Override
 		public void onServiceConnected(final ComponentName name, final IBinder service) {
-			sensorLoggerService = new Messenger(service);
+			sensorLoggerServiceMessenger = new Messenger(service);
 
 			try {
 				final Message message = Message.obtain(null, SensorLoggerService.MSG_REGISTER_CLIENT);
 				message.replyTo = callbackMessenger;
-				sensorLoggerService.send(message);
+				sensorLoggerServiceMessenger.send(message);
 			} catch (final RemoteException e) {
 				Log.e(TAG, e.getMessage(), e);
 			}
@@ -72,7 +73,7 @@ public class LoggerFragment extends Fragment {
 
 		@Override
 		public void onServiceDisconnected(final ComponentName name) {
-			sensorLoggerService = null;
+			sensorLoggerServiceMessenger = null;
 		}
 	};
 
@@ -88,7 +89,7 @@ public class LoggerFragment extends Fragment {
 				bundle.putString(SensorLoggerService.DATA_ACTIVITY_ID, label.getId() + "");
 				message.setData(bundle);
 
-				sensorLoggerService.send(message);
+				sensorLoggerServiceMessenger.send(message);
 			} catch (final RemoteException e) {
 				Log.e(TAG, e.getMessage(), e);
 			}
@@ -135,9 +136,8 @@ public class LoggerFragment extends Fragment {
 	}
 
 	private void doBindService() {
-		getActivity().bindService(new Intent(getActivity(), SensorLoggerService.class), sensorLoggerServiceConnection,
-				Context.BIND_AUTO_CREATE | Service.START_STICKY);
-		mIsBound = true;
+		final Intent bindIntent = new Intent(getActivity(), SensorLoggerService.class);
+		mIsBound = getActivity().bindService(bindIntent, sensorLoggerServiceConnection, Context.BIND_AUTO_CREATE | Service.START_STICKY);
 	}
 
 	void doUnbindService() {
@@ -252,10 +252,7 @@ public class LoggerFragment extends Fragment {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		if (sensorLoggerService == null) {
-			doBindService();
-		}
+		doBindService();
 	}
 
 	@Override
@@ -285,7 +282,7 @@ public class LoggerFragment extends Fragment {
 	private void stopLogging() {
 		try {
 			final Message message = Message.obtain(null, SensorLoggerService.MSG_STOP_LOGGING);
-			sensorLoggerService.send(message);
+			sensorLoggerServiceMessenger.send(message);
 		} catch (final RemoteException e) {
 			Log.e(TAG, e.getMessage(), e);
 		}
@@ -352,11 +349,19 @@ public class LoggerFragment extends Fragment {
 	/**
 	 * Call-back handler class for communication with the SensorLoggerService
 	 */
-	private class CallbackHandler extends Handler {
+	private static class CallbackHandler extends Handler {
+
+		WeakReference<LoggerFragment> mFrag;
+
+		CallbackHandler(LoggerFragment loggerFragment) {
+			mFrag = new WeakReference<LoggerFragment>(loggerFragment);
+		}
+
 		@Override
 		public void handleMessage(final Message msg) {
+			LoggerFragment loggerFragment = mFrag.get();
 			if (msg.what == SensorLoggerService.MSG_STATUS) {
-				showStatus(msg.getData());
+				loggerFragment.showStatus(msg.getData());
 			}
 		}
 	}

@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -42,150 +43,6 @@ public class SensorLoggerService extends Service {
 	public static final String DATA_ACTIVITY_ID = "data_activity_id";
 	public static final String DATA_STATUS = "data_status";
 
-	/**
-	 * Handler of incoming messages from clients.
-	 */
-	class IncomingHandler extends Handler {
-
-		@Override
-		public void handleMessage(final Message msg) {
-			switch (msg.what) {
-			case MSG_REGISTER_CLIENT:
-				// register the client
-				mClient = msg.replyTo;
-				break;
-			case MSG_START_LOGGING:
-				// if we are currently logging then we need to stop it before we
-				// can change the activity
-				if (state == ServiceState.LOGGING) {
-					stopLogging();
-				}
-				
-				try {
-					startLogging(msg.getData());
-				} catch (final IOException e) {
-					Log.e(TAG, e.getMessage(), e);
-				}
-				
-				break;
-			case MSG_STOP_LOGGING:
-				stopLogging();
-				break;
-			}
-
-			informClientCurrentStatus();
-		}
-
-		private void informClientCurrentStatus() {
-			try {
-				final Message message = Message.obtain(null, MSG_STATUS);
-				final Bundle data = new Bundle();
-				data.putString(DATA_STATUS, state.toString());
-				data.putString(DATA_ACTIVITY_LABEL, currentActivity);
-				data.putString(DATA_ACTIVITY_ID, currentActivityId);
-				message.setData(data);
-				mClient.send(message);
-			} catch (final RemoteException e) {
-				e.printStackTrace();
-			}
-		}
-
-		private void startLogging(final Bundle data) throws IOException {
-			currentActivity = data.getString(DATA_ACTIVITY_LABEL);
-			currentActivityId = data.getString(DATA_ACTIVITY_ID);
-			referenceTime = SystemClock.uptimeMillis();
-			startTime = new Date();
-
-			final int linearAccSensor = Sensor.TYPE_LINEAR_ACCELERATION;
-			final int gravitySensor = Sensor.TYPE_GRAVITY;
-			sensorMap.put(linearAccSensor, new BufferedWriter(new FileWriter(getLogFile(linearAccSensor))));
-			sensorMap.put(gravitySensor, new BufferedWriter(new FileWriter(getLogFile(gravitySensor))));
-
-			for (final BufferedWriter writer : sensorMap.values()) {
-				writer.write("#" + currentActivity.toLowerCase().replace(" ", "") + "\n");
-				writer.write("time[ms], x-axis[m/s^2], y-axis[m/s^2], z-axis[m/s^2]\n");
-			}
-
-			mSensorManager.registerListener(sensorEventListener, mSensorManager.getSensorList(linearAccSensor).get(0),
-					SensorManager.SENSOR_DELAY_FASTEST);
-			mSensorManager.registerListener(sensorEventListener, mSensorManager.getSensorList(gravitySensor).get(0),
-					SensorManager.SENSOR_DELAY_FASTEST);
-
-			state = ServiceState.LOGGING;
-
-			showNotification();
-		}
-
-		private File getLogFile(final int sensorType) throws IOException {
-			// create/get the sub folder for the logs
-			final String dir = getLogPath();
-			final File path = new File(getExternalFilesDir(null), dir);
-			if (!path.exists()) {
-				path.mkdir();
-			}
-
-			// create new log file
-			final String fileName = getFileName(mSensorManager.getSensorList(sensorType).get(0).getName());
-			final File file = new File(path, fileName);
-			if (!file.exists()) {
-				file.createNewFile();
-			}
-			Log.i(TAG, "file created: " + file.getAbsolutePath());
-			return file;
-		}
-
-		private void stopLogging() {
-			state = ServiceState.STOPPED;
-			// first stop logging new values
-			mSensorManager.unregisterListener(sensorEventListener);
-
-			// write files
-			for (final BufferedWriter writer : sensorMap.values()) {
-				try {
-					writer.flush();
-					writer.close();
-				} catch (final IOException e) {
-					Log.e(TAG, e.getMessage(), e);
-				}
-			}
-
-			// remove notification (using the unique id of our string that
-			// was used when we created the notification)
-			mNotificationManager.cancel(R.string.logger_notification_title);
-
-			Toast.makeText(getApplicationContext(), R.string.toast_logging_stopped, Toast.LENGTH_SHORT).show();
-		}
-
-		private String getFileName(final String name) {
-			final String filename = getLogPath() + "-" + name.toLowerCase().replace(" ", "");
-			return filename + ".csv";
-		}
-
-		private String getLogPath() {
-			final SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd-HHmmssSSS");
-			final String path = dateFormat.format(startTime) + "-" + currentActivity.toLowerCase().replace(" ", "");
-			return path;
-		}
-	}
-
-	public enum ServiceState {
-
-		/**
-		 * The service is in state logging iff the sensor event listener is
-		 * registered.
-		 */
-		LOGGING,
-		/**
-		 * The service starts in this state. No logging is going on in this
-		 * state.
-		 */
-		STOPPED;
-	}
-
-	/* ********************************************************************
-	 * Commands for this service
-	 */
-
 	public final static int MSG_REGISTER_CLIENT = 0;
 
 	/**
@@ -208,20 +65,19 @@ public class SensorLoggerService extends Service {
 	 */
 	public final static int MSG_STATUS = 3;
 
-	/* **************************************************************************
-	 * Fields
-	 */
-
 	/** */
 	private ServiceState state = ServiceState.STOPPED;
 
 	/** Remembers the activity for which the sensors are being logged. */
 	private String currentActivity;
-
-	private String currentActivityId;
+	private int currentActivityId;
 
 	/** Target published for clients to send messages to. */
 	private Messenger mMessenger;
+
+	/* ********************************************************************
+	 * Commands for this service
+	 */
 
 	/** The notification manager. Used to show notifications. */
 	private NotificationManager mNotificationManager;
@@ -279,6 +135,11 @@ public class SensorLoggerService extends Service {
 		private final DecimalFormat NUMBER_FORMATTER = new DecimalFormat("#.#####");
 
 		@Override
+		public void onAccuracyChanged(final Sensor sensor, final int accuracy) {
+			// ignore accuracy changes...
+		}
+
+		@Override
 		public void onSensorChanged(final SensorEvent event) {
 			// Log.d(TAG, "onSensorChanged called:" + toCSVString(event));
 			try {
@@ -290,11 +151,6 @@ public class SensorLoggerService extends Service {
 			} catch (final IOException e) {
 				Log.e(TAG, e.getMessage(), e);
 			}
-		}
-
-		@Override
-		public void onAccuracyChanged(final Sensor sensor, final int accuracy) {
-			// TODO Auto-generated method stub
 		}
 
 		/**
@@ -309,9 +165,57 @@ public class SensorLoggerService extends Service {
 		}
 	};
 
-	/* **************************************************************************
-	 * Service life-cycle
+	private String getFileName(final String name) {
+		final String filename = getLogPath() + "-" + name.toLowerCase().replace(" ", "");
+		return filename + ".csv";
+	}
+
+	private File getLogFile(final int sensorType) throws IOException {
+		// create/get the sub folder for the logs
+		final String dir = getLogPath();
+		final File path = new File(getExternalFilesDir(null), dir);
+		if (!path.exists()) {
+			path.mkdir();
+		}
+
+		// create new log file
+		final String fileName = getFileName(mSensorManager.getSensorList(sensorType).get(0).getName());
+		final File file = new File(path, fileName);
+		if (!file.exists()) {
+			file.createNewFile();
+		}
+		Log.i(TAG, "file created: " + file.getAbsolutePath());
+		return file;
+	}
+
+	private String getLogPath() {
+		final SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd-HHmmssSSS");
+		final String path = dateFormat.format(startTime) + "-" + currentActivity.toLowerCase().replace(" ", "");
+		return path;
+	}
+
+	private void informClientCurrentStatus() {
+		try {
+			final Message message = Message.obtain(null, MSG_STATUS);
+			final Bundle data = new Bundle();
+			data.putString(DATA_STATUS, state.toString());
+			data.putString(DATA_ACTIVITY_LABEL, currentActivity);
+			data.putString(DATA_ACTIVITY_ID, "" + currentActivityId);
+			message.setData(data);
+			mClient.send(message);
+		} catch (final RemoteException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Return the messenger interface upon binding to this service. Allows the
+	 * client to communicate with this service via the messenger interface.
 	 */
+	@Override
+	public IBinder onBind(final Intent intent) {
+		return mMessenger.getBinder();
+	}
 
 	/**
 	 * Called by the system when the service is first created. Do not call this
@@ -324,7 +228,7 @@ public class SensorLoggerService extends Service {
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
 		// instantiate private fields
-		mMessenger = new Messenger(new IncomingHandler());
+		mMessenger = new Messenger(new IncomingHandler(this));
 		sensorMap = new HashMap<Integer, BufferedWriter>();
 
 		/**
@@ -350,21 +254,6 @@ public class SensorLoggerService extends Service {
 		}
 	}
 
-	/* ************************************************************************* */
-
-	/**
-	 * Return the messenger interface upon binding to this service. Allows the
-	 * client to communicate with this service via the messenger interface.
-	 */
-	@Override
-	public IBinder onBind(final Intent intent) {
-		return mMessenger.getBinder();
-	}
-
-	/* **************************************************************************
-	 * Private helper methods
-	 */
-
 	/**
 	 * Displays a notification as long as this service is logging sensor values.
 	 * The user will be redirected to the logging activity if he reacts to the
@@ -384,11 +273,11 @@ public class SensorLoggerService extends Service {
 		// the PendingIntent used to launch the logger activity if the user
 		// selects this notification
 		final Intent pendingIntent = new Intent(this, LoggerActivity.class);
-		
+
 		final TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
 		stackBuilder.addParentStack(LoggerActivity.class);
 		stackBuilder.addNextIntent(pendingIntent);
-		
+
 		final PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 		builder.setContentIntent(resultPendingIntent);
 
@@ -398,6 +287,117 @@ public class SensorLoggerService extends Service {
 
 		// send the notification. string id used because its a unique number.
 		mNotificationManager.notify(R.string.logger_notification_title, notification);
+	}
+
+	/* **************************************************************************
+	 * Service life-cycle
+	 */
+
+	private void startLogging(final Bundle data) throws IOException {
+		currentActivity = data.getString(DATA_ACTIVITY_LABEL);
+		currentActivityId = data.getInt(DATA_ACTIVITY_ID);
+		referenceTime = SystemClock.uptimeMillis();
+		startTime = new Date();
+
+		final int linearAccSensor = Sensor.TYPE_LINEAR_ACCELERATION;
+		final int gravitySensor = Sensor.TYPE_GRAVITY;
+		sensorMap.put(linearAccSensor, new BufferedWriter(new FileWriter(getLogFile(linearAccSensor))));
+		sensorMap.put(gravitySensor, new BufferedWriter(new FileWriter(getLogFile(gravitySensor))));
+
+		for (final BufferedWriter writer : sensorMap.values()) {
+			writer.write("#" + currentActivity.toLowerCase().replace(" ", "") + "\n");
+			writer.write("time[ms], x-axis[m/s^2], y-axis[m/s^2], z-axis[m/s^2]\n");
+		}
+
+		mSensorManager.registerListener(sensorEventListener, mSensorManager.getSensorList(linearAccSensor).get(0),
+				SensorManager.SENSOR_DELAY_FASTEST);
+		mSensorManager.registerListener(sensorEventListener, mSensorManager.getSensorList(gravitySensor).get(0),
+				SensorManager.SENSOR_DELAY_FASTEST);
+
+		state = ServiceState.LOGGING;
+
+		showNotification();
+	}
+
+	private void stopLogging() {
+		state = ServiceState.STOPPED;
+		// first stop logging new values
+		mSensorManager.unregisterListener(sensorEventListener);
+
+		// write files
+		for (final BufferedWriter writer : sensorMap.values()) {
+			try {
+				writer.flush();
+				writer.close();
+			} catch (final IOException e) {
+				Log.e(TAG, e.getMessage(), e);
+			}
+		}
+
+		// remove notification (using the unique id of our string that
+		// was used when we created the notification)
+		mNotificationManager.cancel(R.string.logger_notification_title);
+	}
+
+	/* ************************************************************************* */
+
+	/**
+	 * Handler of incoming messages from clients.
+	 */
+	static class IncomingHandler extends Handler {
+
+		private WeakReference<SensorLoggerService> mService;
+
+		public IncomingHandler(SensorLoggerService service) {
+			mService = new WeakReference<SensorLoggerService>(service);
+		}
+
+		@Override
+		public void handleMessage(final Message msg) {
+			SensorLoggerService service = mService.get();
+
+			switch (msg.what) {
+			case MSG_REGISTER_CLIENT:
+				// register the client
+				service.mClient = msg.replyTo;
+				break;
+			case MSG_START_LOGGING:
+				// if we are currently logging then we need to stop it before we
+				// can change the activity
+				if (service.state == ServiceState.LOGGING) {
+					service.stopLogging();
+				}
+
+				try {
+					service.startLogging(msg.getData());
+				} catch (final IOException e) {
+					Log.e(TAG, e.getMessage(), e);
+				}
+
+				break;
+			case MSG_STOP_LOGGING:
+				service.stopLogging();
+				Toast.makeText(service.getApplicationContext(), R.string.toast_logging_stopped, Toast.LENGTH_SHORT).show();
+				break;
+			}
+
+			service.informClientCurrentStatus();
+		}
+
+	}
+
+	public enum ServiceState {
+
+		/**
+		 * The service is in state logging iff the sensor event listener is
+		 * registered.
+		 */
+		LOGGING,
+		/**
+		 * The service starts in this state. No logging is going on in this
+		 * state.
+		 */
+		STOPPED;
 	}
 
 }

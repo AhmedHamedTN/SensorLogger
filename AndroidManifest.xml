@@ -20,7 +20,7 @@
         <activity
             android:name="at.jku.tfeichtinger.sensorlogger.activities.LoggerActivity"
             android:label="@string/app_name"
-            android:uiOptions="splitActionBarWhenNarrow">
+            android:uiOptions="splitActionBarWhenNarrow" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -28,7 +28,9 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".services.SensorLoggerService" />
+        <service
+            android:name=".services.SensorLoggerService"
+            android:process=":remote" />
     </application>
 
 </manifest>
