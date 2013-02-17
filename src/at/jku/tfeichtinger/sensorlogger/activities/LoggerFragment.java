@@ -18,16 +18,18 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
+import android.util.SparseBooleanArray;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView.MultiChoiceModeListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.TextView;
@@ -93,22 +95,32 @@ public class LoggerFragment extends Fragment {
 		}
 	};
 
-	private void createAddLabelDialog() {
+	/**
+	 * 
+	 * @param editLabel
+	 *            empty string if create a new label; the label if editing;
+	 */
+	private void createAddLabelDialog(String editLabel) {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		final LayoutInflater inflater = getActivity().getLayoutInflater();
 
 		final View dialogView = inflater.inflate(R.layout.dialog_add_label, null);
 		final EditText labelText = (EditText) dialogView.findViewById(R.id.labelname);
+		labelText.setText(editLabel);
 
-		builder.setView(dialogView)
+		builder.setView(dialogView).setTitle(R.string.dialog_create_label)
 		// Add action buttons
 				.setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(final DialogInterface dialog, final int id) {
-						final ActivityLabel label = new ActivityLabel(labelText.getText().toString());
-						try {
-							getDbHelper().getActivityLabelDao().create(label);
-						} catch (SQLException e) {
+						final String text = labelText.getText().toString();
+						if (text != null && !text.isEmpty()) {
+							final ActivityLabel label = new ActivityLabel(text);
+							try {
+								getDbHelper().getActivityLabelDao().create(label);
+							} catch (SQLException e) {
+								Log.e(TAG, e.getMessage(), e);
+							}
 						}
 					}
 				}).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -118,9 +130,7 @@ public class LoggerFragment extends Fragment {
 					}
 				});
 
-		// create alert dialog
 		AlertDialog alertDialog = builder.create();
-		// show it
 		alertDialog.show();
 	}
 
@@ -152,12 +162,6 @@ public class LoggerFragment extends Fragment {
 	}
 
 	@Override
-	public void onCreate(final Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		doBindService();
-	}
-
-	@Override
 	public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
 		inflater.inflate(R.menu.activity_logger, menu);
 		super.onCreateOptionsMenu(menu, inflater);
@@ -169,6 +173,56 @@ public class LoggerFragment extends Fragment {
 
 		activityLabelGrid = (GridView) view.findViewById(R.id.activities_grid);
 		activityLabelGrid.setOnItemClickListener(onGridItemClickListener);
+
+		activityLabelGrid.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
+		activityLabelGrid.setMultiChoiceModeListener(new MultiChoiceModeListener() {
+
+			@Override
+			public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+				return false;
+			}
+
+			@Override
+			public void onDestroyActionMode(ActionMode mode) {
+			}
+
+			@Override
+			public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+				MenuInflater inflater = mode.getMenuInflater();
+				inflater.inflate(R.menu.label_context, menu);
+				return true;
+			}
+
+			@Override
+			public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+				switch (item.getItemId()) {
+				case R.id.menu_label_delete:
+					try {
+						deleteSelectedActivityLabels();
+						refreshGrid();
+					} catch (SQLException e) {
+						Log.e(TAG, e.getMessage(), e);
+					}
+					return true;
+				}
+				return false;
+			}
+
+			private void deleteSelectedActivityLabels() throws SQLException {
+				final int len = activityLabelGrid.getCount();
+				for (int i = 0; i < len; i++) {
+					final SparseBooleanArray checked = activityLabelGrid.getCheckedItemPositions();
+					if (checked.get(i)) {
+						ActivityLabel label = (ActivityLabel) adapter.getItem(i);
+						getDbHelper().getActivityLabelDao().delete(label);
+					}
+				}
+			}
+
+			@Override
+			public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+			}
+		});
 
 		setHasOptionsMenu(true);
 
@@ -188,7 +242,7 @@ public class LoggerFragment extends Fragment {
 			stopLogging();
 			return true;
 		case R.id.menu_add_label:
-			createAddLabelDialog();
+			createAddLabelDialog("");
 			refreshGrid();
 			return true;
 		}
@@ -196,18 +250,26 @@ public class LoggerFragment extends Fragment {
 	}
 
 	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		if (sensorLoggerService == null) {
+			doBindService();
+		}
+	}
+
+	@Override
 	public void onResume() {
 		super.onResume();
-
 		refreshGrid();
 	}
 
 	private void refreshGrid() {
 		try {
 			fillGrid();
-		} catch (final SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			activityLabelGrid.invalidate();
+		} catch (SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
 		}
 	}
 

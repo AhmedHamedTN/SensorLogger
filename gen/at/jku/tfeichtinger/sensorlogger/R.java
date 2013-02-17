@@ -26,6 +26,8 @@ public final class R {
         public static final int labelname=0x7f080002;
         public static final int menu_add_label=0x7f080008;
         public static final int menu_delete=0x7f08000a;
+        public static final int menu_label_delete=0x7f08000d;
+        public static final int menu_label_edit=0x7f08000e;
         public static final int menu_selectall=0x7f08000b;
         public static final int menu_share=0x7f08000c;
         public static final int menu_stop_logging=0x7f080009;
@@ -41,6 +43,7 @@ public final class R {
     public static final class menu {
         public static final int activity_logger=0x7f070000;
         public static final int files_context=0x7f070001;
+        public static final int label_context=0x7f070002;
     }
     public static final class raw {
         public static final int ormlite_config=0x7f040000;
@@ -49,30 +52,32 @@ public final class R {
         /**  General 
          */
         public static final int app_name=0x7f050000;
-        public static final int cancel=0x7f050003;
-        public static final int create=0x7f050002;
+        public static final int cancel=0x7f050004;
+        public static final int create=0x7f050003;
         /**  Dialogs 
          */
-        public static final int dialog_create_label=0x7f050008;
+        public static final int dialog_create_label=0x7f050009;
         /**  Hints 
          */
-        public static final int hint_label=0x7f050007;
-        public static final int logger_service_started=0x7f050001;
-        public static final int menu_add_label=0x7f05000a;
-        public static final int menu_delete=0x7f05000c;
-        public static final int menu_selectall=0x7f05000e;
+        public static final int hint_label=0x7f050008;
+        public static final int logger_notification_text=0x7f050002;
+        public static final int logger_notification_title=0x7f050001;
+        public static final int menu_add_label=0x7f05000b;
+        public static final int menu_delete=0x7f05000d;
+        public static final int menu_edit=0x7f05000e;
+        public static final int menu_selectall=0x7f050010;
         /**  Menu strings 
          */
-        public static final int menu_settings=0x7f050009;
-        public static final int menu_share=0x7f05000d;
-        public static final int menu_stop_logging=0x7f05000b;
-        public static final int tab_files=0x7f050005;
+        public static final int menu_settings=0x7f05000a;
+        public static final int menu_share=0x7f05000f;
+        public static final int menu_stop_logging=0x7f05000c;
+        public static final int tab_files=0x7f050006;
         /**  Tab headings 
          */
-        public static final int tab_logger=0x7f050004;
+        public static final int tab_logger=0x7f050005;
         /**  Toasts 
          */
-        public static final int toast_logging_stopped=0x7f050006;
+        public static final int toast_logging_stopped=0x7f050007;
     }
     public static final class style {
         /** 

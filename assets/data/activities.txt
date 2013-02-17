@@ -1,8 +1,6 @@
 Walk
 Jog
-Run
-Cycle
-Sit
-Stand
+Sprint
+Riding bike
 Stairs up
 Stairs down
