@@ -7,7 +7,7 @@ import com.j256.ormlite.table.DatabaseTable;
 public class ActivityLabel {
 
 	@DatabaseField(generatedId = true)
-	private int id;
+	private Integer id;
 
 	@DatabaseField
 	private String label;
@@ -28,7 +28,7 @@ public class ActivityLabel {
 		this.label = label;
 	}
 
-	public int getId() {
+	public Integer getId() {
 		return id;
 	}
 

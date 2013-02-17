@@ -53,7 +53,6 @@ public final class R {
          */
         public static final int app_name=0x7f050000;
         public static final int cancel=0x7f050004;
-        public static final int create=0x7f050003;
         /**  Dialogs 
          */
         public static final int dialog_create_label=0x7f050009;
@@ -71,6 +70,7 @@ public final class R {
         public static final int menu_settings=0x7f05000a;
         public static final int menu_share=0x7f05000f;
         public static final int menu_stop_logging=0x7f05000c;
+        public static final int save=0x7f050003;
         public static final int tab_files=0x7f050006;
         /**  Tab headings 
          */
