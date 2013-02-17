@@ -2,8 +2,11 @@ package at.jku.tfeichtinger.sensorlogger.activities;
 
 import java.lang.ref.WeakReference;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.Service;
@@ -50,7 +53,7 @@ public class LoggerFragment extends Fragment {
 	/** A messenger for sending messages to the service. */
 	private Messenger sensorLoggerServiceMessenger;
 	/** The grid adapter. */
-	private ActivityLabelAdapter adapter;
+	private ActivityLabelAdapter activityLabelAdapter;
 	/** The database helper. */
 	private DatabaseHelper dbHelper;
 
@@ -86,7 +89,7 @@ public class LoggerFragment extends Fragment {
 				final ActivityLabel label = (ActivityLabel) activityLabelGrid.getItemAtPosition(position);
 				final Bundle bundle = new Bundle();
 				bundle.putString(SensorLoggerService.DATA_ACTIVITY_LABEL, label.getLabel());
-				bundle.putString(SensorLoggerService.DATA_ACTIVITY_ID, label.getId() + "");
+				bundle.putInt(SensorLoggerService.DATA_ACTIVITY_ID, label.getId());
 				message.setData(bundle);
 
 				sensorLoggerServiceMessenger.send(message);
@@ -101,7 +104,7 @@ public class LoggerFragment extends Fragment {
 	 * @param editLabel
 	 *            empty string if create a new label; the label if editing;
 	 */
-	private void createAddLabelDialog(String editLabel) {
+	private void createAddLabelDialog(final String editLabel) {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		final LayoutInflater inflater = getActivity().getLayoutInflater();
 
@@ -119,7 +122,8 @@ public class LoggerFragment extends Fragment {
 							final ActivityLabel label = new ActivityLabel(text);
 							try {
 								getDbHelper().getActivityLabelDao().create(label);
-							} catch (SQLException e) {
+								refreshGrid();
+							} catch (final SQLException e) {
 								Log.e(TAG, e.getMessage(), e);
 							}
 						}
@@ -131,12 +135,13 @@ public class LoggerFragment extends Fragment {
 					}
 				});
 
-		AlertDialog alertDialog = builder.create();
+		final AlertDialog alertDialog = builder.create();
 		alertDialog.show();
 	}
 
 	private void doBindService() {
 		final Intent bindIntent = new Intent(getActivity(), SensorLoggerService.class);
+		getActivity().startService(bindIntent);
 		mIsBound = getActivity().bindService(bindIntent, sensorLoggerServiceConnection, Context.BIND_AUTO_CREATE | Service.START_STICKY);
 	}
 
@@ -146,12 +151,6 @@ public class LoggerFragment extends Fragment {
 			getActivity().unbindService(sensorLoggerServiceConnection);
 			mIsBound = false;
 		}
-	}
-
-	private void fillGrid() throws SQLException {
-		final List<ActivityLabel> allLabels = getDbHelper().getActivityLabelDao().queryForAll();
-		adapter = new ActivityLabelAdapter(getActivity(), allLabels);
-		activityLabelGrid.setAdapter(adapter);
 	}
 
 	private DatabaseHelper getDbHelper() {
@@ -178,29 +177,29 @@ public class LoggerFragment extends Fragment {
 		activityLabelGrid.setMultiChoiceModeListener(new MultiChoiceModeListener() {
 
 			@Override
-			public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+			public boolean onPrepareActionMode(final ActionMode mode, final Menu menu) {
 				return false;
 			}
 
 			@Override
-			public void onDestroyActionMode(ActionMode mode) {
+			public void onDestroyActionMode(final ActionMode mode) {
 			}
 
 			@Override
-			public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-				MenuInflater inflater = mode.getMenuInflater();
+			public boolean onCreateActionMode(final ActionMode mode, final Menu menu) {
+				final MenuInflater inflater = mode.getMenuInflater();
 				inflater.inflate(R.menu.label_context, menu);
 				return true;
 			}
 
 			@Override
-			public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+			public boolean onActionItemClicked(final ActionMode mode, final MenuItem item) {
 				switch (item.getItemId()) {
 				case R.id.menu_label_delete:
 					try {
 						deleteSelectedActivityLabels();
 						refreshGrid();
-					} catch (SQLException e) {
+					} catch (final SQLException e) {
 						Log.e(TAG, e.getMessage(), e);
 					}
 					return true;
@@ -213,19 +212,21 @@ public class LoggerFragment extends Fragment {
 				for (int i = 0; i < len; i++) {
 					final SparseBooleanArray checked = activityLabelGrid.getCheckedItemPositions();
 					if (checked.get(i)) {
-						ActivityLabel label = (ActivityLabel) adapter.getItem(i);
+						final ActivityLabel label = (ActivityLabel) activityLabelAdapter.getItem(i);
 						getDbHelper().getActivityLabelDao().delete(label);
 					}
 				}
 			}
 
 			@Override
-			public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+			public void onItemCheckedStateChanged(final ActionMode mode, final int position, final long id, final boolean checked) {
 			}
 		});
 
 		setHasOptionsMenu(true);
 
+		activityLabelAdapter = new ActivityLabelAdapter(getActivity());
+		activityLabelGrid.setAdapter(activityLabelAdapter);
 		return view;
 	}
 
@@ -250,7 +251,7 @@ public class LoggerFragment extends Fragment {
 	}
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
+	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		doBindService();
 	}
@@ -263,20 +264,23 @@ public class LoggerFragment extends Fragment {
 
 	private void refreshGrid() {
 		try {
-			fillGrid();
-			activityLabelGrid.invalidate();
-		} catch (SQLException e) {
+			final List<ActivityLabel> allLabels = getDbHelper().getActivityLabelDao().queryForAll();
+			activityLabelAdapter.setLabels(allLabels);
+		} catch (final SQLException e) {
 			Log.e(TAG, e.getMessage(), e);
 		}
+
+		activityLabelGrid.invalidate();
 	}
 
 	private void showStatus(final Bundle data) {
 		final ServiceState status = SensorLoggerService.ServiceState.valueOf(data.getString(SensorLoggerService.DATA_STATUS));
 		if (status == ServiceState.LOGGING) {
-			adapter.setHighlightedId(Integer.parseInt(data.getString(SensorLoggerService.DATA_ACTIVITY_ID)));
+			activityLabelAdapter.setHighlightedId(data.getInt(SensorLoggerService.DATA_ACTIVITY_ID));
 		} else {
-			adapter.disableHightlight();
+			activityLabelAdapter.disableHightlight();
 		}
+		refreshGrid();
 	}
 
 	private void stopLogging() {
@@ -291,13 +295,22 @@ public class LoggerFragment extends Fragment {
 	private class ActivityLabelAdapter extends BaseAdapter {
 
 		private final Context context;
-		private final List<ActivityLabel> labels;
+		private List<ActivityLabel> labels;
 
 		private Integer highlightedId;
 
 		public ActivityLabelAdapter(final Context context, final List<ActivityLabel> labels) {
 			this.context = context;
 			this.labels = labels;
+		}
+
+		public ActivityLabelAdapter(final Context context) {
+			this(context, Collections.<ActivityLabel> emptyList());
+		}
+
+		public void setLabels(List<ActivityLabel> labels) {
+			this.labels = labels;
+			notifyDataSetChanged();
 		}
 
 		public void disableHightlight() {
@@ -344,6 +357,14 @@ public class LoggerFragment extends Fragment {
 			highlightedId = id;
 			notifyDataSetChanged();
 		}
+
+		public Integer getHighlightedId() {
+			return highlightedId;
+		}
+
+		public void setHighlightedId(Integer highlightedId) {
+			this.highlightedId = highlightedId;
+		}
 	}
 
 	/**
@@ -353,13 +374,13 @@ public class LoggerFragment extends Fragment {
 
 		WeakReference<LoggerFragment> mFrag;
 
-		CallbackHandler(LoggerFragment loggerFragment) {
+		CallbackHandler(final LoggerFragment loggerFragment) {
 			mFrag = new WeakReference<LoggerFragment>(loggerFragment);
 		}
 
 		@Override
 		public void handleMessage(final Message msg) {
-			LoggerFragment loggerFragment = mFrag.get();
+			final LoggerFragment loggerFragment = mFrag.get();
 			if (msg.what == SensorLoggerService.MSG_STATUS) {
 				loggerFragment.showStatus(msg.getData());
 			}

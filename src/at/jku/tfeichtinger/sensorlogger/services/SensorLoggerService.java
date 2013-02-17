@@ -200,7 +200,7 @@ public class SensorLoggerService extends Service {
 			final Bundle data = new Bundle();
 			data.putString(DATA_STATUS, state.toString());
 			data.putString(DATA_ACTIVITY_LABEL, currentActivity);
-			data.putString(DATA_ACTIVITY_ID, "" + currentActivityId);
+			data.putInt(DATA_ACTIVITY_ID, currentActivityId);
 			message.setData(data);
 			mClient.send(message);
 		} catch (final RemoteException e) {
@@ -346,15 +346,15 @@ public class SensorLoggerService extends Service {
 	 */
 	static class IncomingHandler extends Handler {
 
-		private WeakReference<SensorLoggerService> mService;
+		private final WeakReference<SensorLoggerService> mService;
 
-		public IncomingHandler(SensorLoggerService service) {
+		public IncomingHandler(final SensorLoggerService service) {
 			mService = new WeakReference<SensorLoggerService>(service);
 		}
 
 		@Override
 		public void handleMessage(final Message msg) {
-			SensorLoggerService service = mService.get();
+			final SensorLoggerService service = mService.get();
 
 			switch (msg.what) {
 			case MSG_REGISTER_CLIENT:
