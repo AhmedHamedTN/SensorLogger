@@ -5,7 +5,8 @@
     android:background="?android:attr/activatedBackgroundIndicator"
     android:orientation="vertical"
     android:paddingBottom="5dp"
-    android:paddingTop="5dp" >
+    android:paddingTop="5dp"
+    android:paddingLeft="5dp" >
 
     <TextView
         android:id="@+id/filelistitem_file_name"

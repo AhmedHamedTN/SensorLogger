@@ -321,6 +321,7 @@ public class SensorLoggerService extends Service {
 
 	private void stopLogging() {
 		state = ServiceState.STOPPED;
+
 		// first stop logging new values
 		mSensorManager.unregisterListener(sensorEventListener);
 
@@ -362,28 +363,29 @@ public class SensorLoggerService extends Service {
 				service.mClient = msg.replyTo;
 				break;
 			case MSG_START_LOGGING:
-				// if we are currently logging then we need to stop it before we
-				// can change the activity
-				if (service.state == ServiceState.LOGGING) {
+				if (service.state == ServiceState.LOGGING && msg.getData().getInt(DATA_ACTIVITY_ID) == service.currentActivityId) {
 					service.stopLogging();
+				} else {
+					if (service.state == ServiceState.LOGGING) {
+						service.stopLogging();
+					}
+					try {
+						service.startLogging(msg.getData());
+					} catch (final IOException e) {
+						Log.e(TAG, e.getMessage(), e);
+					}
 				}
-
-				try {
-					service.startLogging(msg.getData());
-				} catch (final IOException e) {
-					Log.e(TAG, e.getMessage(), e);
-				}
-
 				break;
 			case MSG_STOP_LOGGING:
-				service.stopLogging();
-				Toast.makeText(service.getApplicationContext(), R.string.toast_logging_stopped, Toast.LENGTH_SHORT).show();
+				if (service.state == ServiceState.LOGGING) {
+					service.stopLogging();
+					Toast.makeText(service.getApplicationContext(), R.string.toast_logging_stopped, Toast.LENGTH_SHORT).show();
+				}
 				break;
 			}
 
 			service.informClientCurrentStatus();
 		}
-
 	}
 
 	public enum ServiceState {

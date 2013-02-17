@@ -357,14 +357,6 @@ public class LoggerFragment extends Fragment {
 			highlightedId = id;
 			notifyDataSetChanged();
 		}
-
-		public Integer getHighlightedId() {
-			return highlightedId;
-		}
-
-		public void setHighlightedId(Integer highlightedId) {
-			this.highlightedId = highlightedId;
-		}
 	}
 
 	/**
