@@ -5,8 +5,6 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
-import com.j256.ormlite.dao.Dao;
-
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.Service;
@@ -22,8 +20,6 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
-import android.util.SparseBooleanArray;
-import android.view.ActionMode;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -32,7 +28,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView.MultiChoiceModeListener;
+import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
@@ -45,6 +41,8 @@ import at.jku.tfeichtinger.sensorlogger.database.DatabaseHelper;
 import at.jku.tfeichtinger.sensorlogger.entities.ActivityLabel;
 import at.jku.tfeichtinger.sensorlogger.services.SensorLoggerService;
 import at.jku.tfeichtinger.sensorlogger.services.SensorLoggerService.ServiceState;
+
+import com.j256.ormlite.dao.Dao;
 
 public class LoggerFragment extends Fragment {
 	private static final String TAG = LoggerFragment.class.getCanonicalName();
@@ -102,6 +100,27 @@ public class LoggerFragment extends Fragment {
 		}
 	};
 
+	private void createHelpDialog() {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		final LayoutInflater inflater = getActivity().getLayoutInflater();
+
+		final View dialogView = inflater.inflate(R.layout.dialog_help_logger, null);
+		WebView webview = (WebView) dialogView.findViewById(R.id.help_logger_webview);
+		webview.loadUrl("file:///android_asset/help_logger.html");
+
+		builder.setView(dialogView).setTitle("FAQ");
+		builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				//
+			}
+		});
+
+		final AlertDialog alertDialog = builder.create();
+		alertDialog.show();
+	}
+
 	/**
 	 * 
 	 * @param editLabel
@@ -115,35 +134,37 @@ public class LoggerFragment extends Fragment {
 		final EditText labelText = (EditText) dialogView.findViewById(R.id.labelname);
 		labelText.setText(label.getLabel());
 
-		builder.setView(dialogView).setTitle(R.string.dialog_create_label)
+		builder.setView(dialogView);
+		builder.setTitle(R.string.dialog_create_label);
 		// Add action buttons
-				.setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(final DialogInterface dialog, final int id) {
-						final String text = labelText.getText().toString();
-						if (text != null && !text.isEmpty()) {
-							try {
-								Dao<ActivityLabel, Integer> dao = getDbHelper().getActivityLabelDao();
-								label.setLabel(text);
+		builder.setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(final DialogInterface dialog, final int id) {
+				final String text = labelText.getText().toString();
+				if (text != null && !text.isEmpty()) {
+					try {
+						Dao<ActivityLabel, Integer> dao = getDbHelper().getActivityLabelDao();
+						label.setLabel(text);
 
-								if (label.getId() == null) {
-									dao.create(label);
-								} else {
-									dao.update(label);
-								}
-
-								refreshGrid();
-							} catch (final SQLException e) {
-								Log.e(TAG, e.getMessage(), e);
-							}
+						if (label.getId() == null) {
+							dao.create(label);
+						} else {
+							dao.update(label);
 						}
-					}
-				}).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-					public void onClick(final DialogInterface dialog, final int id) {
-						dialog.cancel();
 
+						refreshGrid();
+					} catch (final SQLException e) {
+						Log.e(TAG, e.getMessage(), e);
 					}
-				});
+				}
+			}
+		});
+		builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+			public void onClick(final DialogInterface dialog, final int id) {
+				dialog.cancel();
+
+			}
+		});
 
 		final AlertDialog alertDialog = builder.create();
 		alertDialog.show();
@@ -244,8 +265,12 @@ public class LoggerFragment extends Fragment {
 			createUpdateCreateLabelDialog(new ActivityLabel());
 			refreshGrid();
 			return true;
+		case R.id.menu_help_logging:
+			createHelpDialog();
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
 		}
-		return false;
 	}
 
 	@Override

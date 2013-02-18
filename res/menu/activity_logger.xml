@@ -1,14 +1,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    
-    <item 
+
+    <item
         android:id="@+id/menu_add_label"
-        android:showAsAction="ifRoom|withText"
         android:icon="@android:drawable/ic_menu_add"
+        android:showAsAction="ifRoom|withText"
         android:title="@string/menu_add_label"/>
-    
-    <item 
+    <item
         android:id="@+id/menu_stop_logging"
         android:showAsAction="always|withText"
         android:title="@string/menu_stop_logging"/>
-    
+    <item
+        android:id="@+id/menu_help_logging"
+        android:icon="@android:drawable/ic_menu_help"
+        android:showAsAction="always|withText"
+        android:title="@string/menu_help"/>
+
 </menu>

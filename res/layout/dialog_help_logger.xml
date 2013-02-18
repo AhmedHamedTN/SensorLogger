@@ -5,11 +5,10 @@
     android:orientation="vertical"
     android:padding="5dp" >
 
-    <EditText
-        android:id="@+id/labelname"
+    <WebView
+        android:id="@+id/help_logger_webview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/hint_label"
-        android:inputType="text" />
+         />
 
 </LinearLayout>

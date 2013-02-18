@@ -16,29 +16,32 @@ public final class R {
         public static final int ic_launcher=0x7f020002;
     }
     public static final class id {
-        public static final int activities_grid=0x7f080007;
+        public static final int activities_grid=0x7f080008;
         public static final int activitylabel_cell_name=0x7f080001;
-        public static final int filelistitem_file_date=0x7f080005;
-        public static final int filelistitem_file_name=0x7f080003;
-        public static final int filelistitem_file_size=0x7f080004;
-        public static final int filesList=0x7f080006;
+        public static final int filelistitem_file_date=0x7f080006;
+        public static final int filelistitem_file_name=0x7f080004;
+        public static final int filelistitem_file_size=0x7f080005;
+        public static final int filesList=0x7f080007;
         public static final int fragment_container=0x7f080000;
+        public static final int help_logger_webview=0x7f080003;
         public static final int labelname=0x7f080002;
-        public static final int menu_add_label=0x7f080008;
-        public static final int menu_delete=0x7f08000a;
-        public static final int menu_label_delete=0x7f08000d;
-        public static final int menu_label_edit=0x7f08000e;
-        public static final int menu_selectall=0x7f08000b;
-        public static final int menu_share=0x7f08000c;
-        public static final int menu_stop_logging=0x7f080009;
+        public static final int menu_add_label=0x7f080009;
+        public static final int menu_delete=0x7f08000c;
+        public static final int menu_help_logging=0x7f08000b;
+        public static final int menu_label_delete=0x7f08000f;
+        public static final int menu_label_edit=0x7f080010;
+        public static final int menu_selectall=0x7f08000d;
+        public static final int menu_share=0x7f08000e;
+        public static final int menu_stop_logging=0x7f08000a;
     }
     public static final class layout {
         public static final int activity_logger=0x7f030000;
         public static final int activitylabel_cell=0x7f030001;
         public static final int dialog_add_label=0x7f030002;
-        public static final int file_list_item=0x7f030003;
-        public static final int fragment_files=0x7f030004;
-        public static final int fragment_logger=0x7f030005;
+        public static final int dialog_help_logger=0x7f030003;
+        public static final int file_list_item=0x7f030004;
+        public static final int fragment_files=0x7f030005;
+        public static final int fragment_logger=0x7f030006;
     }
     public static final class menu {
         public static final int activity_logger=0x7f070000;
@@ -61,15 +64,16 @@ public final class R {
         public static final int hint_label=0x7f050008;
         public static final int logger_notification_text=0x7f050002;
         public static final int logger_notification_title=0x7f050001;
-        public static final int menu_add_label=0x7f05000b;
-        public static final int menu_delete=0x7f05000d;
-        public static final int menu_edit=0x7f05000e;
-        public static final int menu_selectall=0x7f050010;
         /**  Menu strings 
          */
-        public static final int menu_settings=0x7f05000a;
-        public static final int menu_share=0x7f05000f;
-        public static final int menu_stop_logging=0x7f05000c;
+        public static final int menu_add_label=0x7f05000a;
+        public static final int menu_delete=0x7f05000b;
+        public static final int menu_edit=0x7f05000c;
+        public static final int menu_help=0x7f05000d;
+        public static final int menu_selectall=0x7f05000f;
+        public static final int menu_settings=0x7f05000e;
+        public static final int menu_share=0x7f050010;
+        public static final int menu_stop_logging=0x7f050011;
         public static final int save=0x7f050003;
         public static final int tab_files=0x7f050006;
         /**  Tab headings 
