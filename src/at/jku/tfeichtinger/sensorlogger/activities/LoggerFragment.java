@@ -276,6 +276,15 @@ public class LoggerFragment extends Fragment {
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		getActivity();
+		// first run? -> show FAQ dialog
+		boolean firstrun = getActivity().getSharedPreferences("PREFERENCE", Context.MODE_PRIVATE).getBoolean("firstrun", true);
+		if (firstrun) {
+			createHelpDialog();
+			// Save the state
+			getActivity().getSharedPreferences("PREFERENCE", Context.MODE_PRIVATE).edit().putBoolean("firstrun", false).commit();
+		}
+
 		doBindService();
 	}
 

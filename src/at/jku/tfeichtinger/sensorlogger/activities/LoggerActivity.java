@@ -34,7 +34,6 @@ public class LoggerActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 		bar.addTab(filesTab);
 	}
 
-	
 	protected class TabListener<T extends Fragment> implements ActionBar.TabListener {
 		private Fragment fragment;
 		private final Class<T> clazz;
