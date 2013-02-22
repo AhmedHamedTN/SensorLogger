@@ -231,27 +231,6 @@ public class SensorLoggerService extends Service {
 		mMessenger = new Messenger(new IncomingHandler(this));
 		sensorMap = new HashMap<Integer, BufferedWriter>();
 
-		/**
-		 * Acquire a partial wakelock in order to allow for sensor event logging
-		 * when the user presses the power button. see Android documentation: If
-		 * you hold a partial wakelock, the CPU will continue to run,
-		 * irrespective of any timers and even after the user presses the power
-		 * button. In all other wakelocks, the CPU will run, but the user can
-		 * still put the device to sleep using the power button.
-		 */
-		final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		partialWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
-		synchronized (this) {
-			partialWakeLock.acquire();
-		}
-	}
-
-	@Override
-	public void onDestroy() {
-		// release the wake lock
-		synchronized (this) {
-			partialWakeLock.release();
-		}
 	}
 
 	/**
@@ -294,6 +273,20 @@ public class SensorLoggerService extends Service {
 	 */
 
 	private void startLogging(final Bundle data) throws IOException {
+		/**
+		 * Acquire a partial wakelock in order to allow for sensor event logging
+		 * when the user presses the power button. see Android documentation: If
+		 * you hold a partial wakelock, the CPU will continue to run,
+		 * irrespective of any timers and even after the user presses the power
+		 * button. In all other wakelocks, the CPU will run, but the user can
+		 * still put the device to sleep using the power button.
+		 */
+		final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		partialWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+		synchronized (this) {
+			partialWakeLock.acquire();
+		}
+
 		currentActivity = data.getString(DATA_ACTIVITY_LABEL);
 		currentActivityId = data.getInt(DATA_ACTIVITY_ID);
 		referenceTime = SystemClock.uptimeMillis();
@@ -320,6 +313,11 @@ public class SensorLoggerService extends Service {
 	}
 
 	private void stopLogging() {
+		// release the wake lock
+		synchronized (this) {
+			partialWakeLock.release();
+		}
+
 		state = ServiceState.STOPPED;
 
 		// first stop logging new values
