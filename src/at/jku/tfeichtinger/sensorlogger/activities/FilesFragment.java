@@ -6,11 +6,14 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import android.app.Fragment;
+
+import com.actionbarsherlock.app.SherlockFragment;
+
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -25,7 +28,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import at.jku.tfeichtinger.sensorlogger.R;
 
-public class FilesFragment extends Fragment {
+public class FilesFragment extends SherlockFragment {
 
 	/* ********************************************************************
 	 * Fields
@@ -153,13 +156,13 @@ public class FilesFragment extends Fragment {
 		}
 	}
 
-	private long getDirectorySize(File dir){
-		if (!dir.isDirectory()){
+	private long getDirectorySize(File dir) {
+		if (!dir.isDirectory()) {
 			return 0;
 		}
 
 		long size = 0;
-		for (File f : dir.listFiles()){
+		for (File f : dir.listFiles()) {
 			size += f.length();
 		}
 
@@ -184,8 +187,7 @@ public class FilesFragment extends Fragment {
 		@Override
 		public View getView(final int position, View convertView, final ViewGroup parent) {
 			if (convertView == null) {
-				final LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(
-						Context.LAYOUT_INFLATER_SERVICE);
+				final LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				convertView = inflater.inflate(R.layout.file_list_item, null);
 			}
 

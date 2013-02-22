@@ -1,27 +1,28 @@
 package at.jku.tfeichtinger.sensorlogger.activities;
 
-import android.app.ActionBar;
-import android.app.ActionBar.Tab;
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import at.jku.tfeichtinger.sensorlogger.R;
-import at.jku.tfeichtinger.sensorlogger.database.DatabaseHelper;
 
-import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.ActionBar.Tab;
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 
-public class LoggerActivity extends OrmLiteBaseActivity<DatabaseHelper> {
+public class LoggerActivity extends SherlockFragmentActivity  {
 
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_logger);
 
-		final ActionBar bar = getActionBar();
+		setUpActionBar();
+	}
+
+	private void setUpActionBar() {
+		final ActionBar bar = getSupportActionBar();
 		bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 		bar.setDisplayShowTitleEnabled(false);
 		bar.setDisplayShowHomeEnabled(false);
@@ -34,7 +35,7 @@ public class LoggerActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 		bar.addTab(filesTab);
 	}
 
-	protected class TabListener<T extends Fragment> implements ActionBar.TabListener {
+	protected class TabListener<T extends SherlockFragment> implements ActionBar.TabListener {
 		private Fragment fragment;
 		private final Class<T> clazz;
 		private final String tag;

@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 
 import android.app.AlertDialog;
-import android.app.Fragment;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
@@ -23,9 +22,6 @@ import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
@@ -42,9 +38,14 @@ import at.jku.tfeichtinger.sensorlogger.entities.ActivityLabel;
 import at.jku.tfeichtinger.sensorlogger.services.SensorLoggerService;
 import at.jku.tfeichtinger.sensorlogger.services.SensorLoggerService.ServiceState;
 
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 
-public class LoggerFragment extends Fragment {
+public class LoggerFragment extends SherlockFragment {
 	private static final String TAG = LoggerFragment.class.getCanonicalName();
 
 	/** A messenger for receiving messages from the service. */
@@ -55,6 +56,7 @@ public class LoggerFragment extends Fragment {
 	private Messenger sensorLoggerServiceMessenger;
 	/** The grid adapter. */
 	private ActivityLabelAdapter activityLabelAdapter;
+
 	/** The database helper. */
 	private DatabaseHelper dbHelper;
 
@@ -184,13 +186,6 @@ public class LoggerFragment extends Fragment {
 		}
 	}
 
-	private DatabaseHelper getDbHelper() {
-		if (dbHelper == null) {
-			dbHelper = DatabaseHelper.getInstance();
-		}
-		return dbHelper;
-	}
-
 	@Override
 	public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
 		inflater.inflate(R.menu.activity_logger, menu);
@@ -204,7 +199,10 @@ public class LoggerFragment extends Fragment {
 		activityLabelGrid = (GridView) view.findViewById(R.id.activities_grid);
 		activityLabelGrid.setOnItemClickListener(onGridItemClickListener);
 
-		activityLabelGrid.setChoiceMode(GridView.CHOICE_MODE_SINGLE);
+		// if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+		// TODO check if needed
+		// activityLabelGrid.setChoiceMode(GridView.CHOICE_MODE_SINGLE);
+		// }
 		registerForContextMenu(activityLabelGrid);
 
 		activityLabelAdapter = new ActivityLabelAdapter(getActivity());
@@ -218,12 +216,19 @@ public class LoggerFragment extends Fragment {
 	@Override
 	public void onCreateContextMenu(final ContextMenu menu, final View v, final ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
-		final MenuInflater inflater = getActivity().getMenuInflater();
+		final android.view.MenuInflater inflater = getSherlockActivity().getMenuInflater();
 		inflater.inflate(R.menu.label_context, menu);
 	}
 
+	private DatabaseHelper getDbHelper() {
+		if (dbHelper == null) {
+			dbHelper = (DatabaseHelper) OpenHelperManager.getHelper(getActivity(), DatabaseHelper.class);
+		}
+		return dbHelper;
+	}
+
 	@Override
-	public boolean onContextItemSelected(MenuItem item) {
+	public boolean onContextItemSelected(android.view.MenuItem item) {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 		switch (item.getItemId()) {
 		case R.id.menu_label_delete:
