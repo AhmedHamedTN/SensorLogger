@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -132,7 +133,6 @@ public class SensorLoggerService extends Service {
 		/**
 		 * 
 		 */
-		private final DecimalFormat NUMBER_FORMATTER = new DecimalFormat("#.#####");
 
 		@Override
 		public void onAccuracyChanged(final Sensor sensor, final int accuracy) {
@@ -153,6 +153,8 @@ public class SensorLoggerService extends Service {
 			}
 		}
 
+		private final String NUMBER_FORMAT = "%.6f";
+
 		/**
 		 * Creates a .csv representation out of a sensor event.
 		 * 
@@ -160,8 +162,8 @@ public class SensorLoggerService extends Service {
 		 * @return
 		 */
 		private String toCSVString(final SensorEvent event) {
-			return ((event.timestamp / CONVERSION_FACTOR) - referenceTime) + "," + NUMBER_FORMATTER.format(event.values[0]) + ","
-					+ NUMBER_FORMATTER.format(event.values[1]) + "," + NUMBER_FORMATTER.format(event.values[2]) + "\n";
+			return ((event.timestamp / CONVERSION_FACTOR) - referenceTime) + ";" + String.format(NUMBER_FORMAT, event.values[0]) + ";"
+					+ String.format(NUMBER_FORMAT, event.values[1]) + ";" + String.format(NUMBER_FORMAT, event.values[2]) + "\n";
 		}
 	};
 
@@ -299,7 +301,7 @@ public class SensorLoggerService extends Service {
 
 		for (final BufferedWriter writer : sensorMap.values()) {
 			writer.write("#" + currentActivity.toLowerCase().replace(" ", "") + "\n");
-			writer.write("time[ms], x-axis[m/s^2], y-axis[m/s^2], z-axis[m/s^2]\n");
+			writer.write("time[ms]; x-axis[m/s^2]; y-axis[m/s^2]; z-axis[m/s^2]\n");
 		}
 
 		mSensorManager.registerListener(sensorEventListener, mSensorManager.getSensorList(linearAccSensor).get(0),
