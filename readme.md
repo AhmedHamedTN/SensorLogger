@@ -14,6 +14,7 @@ Labels and sensors can be chosen/edited by the user.
 Screenshots
 ====================
 ![screenshot of logger activity](/screenshots/screenshot_screen01.png "Logger Activity")
+
 ![screenshot of files activity](/screenshots/screenshot_screen02.png "Files Activity")
 
 Sample log file
@@ -30,4 +31,17 @@ time[ms]; x-axis[m/s^2]; y-axis[m/s^2]; z-axis[m/s^2]
 792;-0.008391;7.077981;6.787673
 812;-0.048523;7.009316;6.858390
 833;-0.072022;6.868371;6.999335
+</pre>
+
+Android Version and permissions
+====================
+
+Minimum Android version is Android 2.3 (Codename: Gingerbread).
+
+Uses the following permissions:
+
+<pre>
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.WAKE_LOCK" />
+<uses-permission android:name="android.permission.INTERNET" />
 </pre>
