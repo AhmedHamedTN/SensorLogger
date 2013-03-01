@@ -41,7 +41,7 @@ Minimum Android version is Android 2.3 (Codename: Gingerbread).
 Uses the following permissions:
 
 <pre>
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-<uses-permission android:name="android.permission.WAKE_LOCK" />
-<uses-permission android:name="android.permission.INTERNET" />
+"android.permission.WRITE_EXTERNAL_STORAGE"
+"android.permission.WAKE_LOCK"
+"android.permission.INTERNET"
 </pre>
