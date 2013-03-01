@@ -199,10 +199,6 @@ public class LoggerFragment extends SherlockFragment {
 		activityLabelGrid = (GridView) view.findViewById(R.id.activities_grid);
 		activityLabelGrid.setOnItemClickListener(onGridItemClickListener);
 
-		// if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-		// TODO check if needed
-		// activityLabelGrid.setChoiceMode(GridView.CHOICE_MODE_SINGLE);
-		// }
 		registerForContextMenu(activityLabelGrid);
 
 		activityLabelAdapter = new ActivityLabelAdapter(getActivity());

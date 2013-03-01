@@ -7,26 +7,27 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-import com.actionbarsherlock.app.SherlockFragment;
-
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.util.SparseBooleanArray;
-import android.view.ActionMode;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView.MultiChoiceModeListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import at.jku.tfeichtinger.sensorlogger.R;
+
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.view.ActionMode;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 
 public class FilesFragment extends SherlockFragment {
 
@@ -41,6 +42,8 @@ public class FilesFragment extends SherlockFragment {
 	private ListView filesListView;
 	private FilesAdapter filesAdapter;
 
+	private ActionMode mMode;
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		final View view = inflater.inflate(R.layout.fragment_files, container, false);
@@ -48,58 +51,89 @@ public class FilesFragment extends SherlockFragment {
 		filesListView = (ListView) view.findViewById(R.id.filesList);
 		filesListView.setItemsCanFocus(false);
 
-		filesListView.setMultiChoiceModeListener(new MultiChoiceModeListener() {
+		filesListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+		filesListView.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
-			public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-			}
+			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+				SparseBooleanArray checked = filesListView.getCheckedItemPositions();
+				boolean hasCheckedElement = false;
+				for (int i = 0; i < checked.size() && !hasCheckedElement; i++) {
+					hasCheckedElement = checked.valueAt(i);
+				}
 
-			@Override
-			public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-				// Respond to clicks on the actions in the CAB
-				switch (item.getItemId()) {
-				case R.id.menu_delete:
-					deleteSelectedLogs();
-					mode.finish(); // Action picked, so close the CAB
-					return true;
-				case R.id.menu_selectall:
-					selectAll();
-					return true;
-				case R.id.menu_share:
-					shareSelectedLogs();
-					return true;
-				default:
-					return false;
+				if (hasCheckedElement) {
+					if (mMode == null) {
+						mMode = getSherlockActivity().startActionMode(new ModeCallback());
+					}
+				} else {
+					if (mMode != null) {
+						mMode.finish();
+					}
 				}
 			}
 
-			@Override
-			public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-				// Inflate the menu for the CAB
-				MenuInflater inflater = mode.getMenuInflater();
-				inflater.inflate(R.menu.files_context, menu);
-				return true;
-			}
-
-			@Override
-			public void onDestroyActionMode(ActionMode mode) {
-				// Here you can make any necessary updates to the activity when
-				// the CAB is removed. By default, selected items are
-				// deselected/unchecked.
-			}
-
-			@Override
-			public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-				// Here you can perform updates to the CAB due to
-				// an invalidate() request
-				return false;
-			}
 		});
 
 		filesAdapter = new FilesAdapter(getActivity());
 		filesListView.setAdapter(filesAdapter);
 		return view;
 	}
+
+	private final class ModeCallback implements ActionMode.Callback {
+
+		@Override
+		public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+			// Create the menu from the xml file
+			MenuInflater inflater = getSherlockActivity().getSupportMenuInflater();
+			inflater.inflate(R.menu.files_context, menu);
+			return true;
+		}
+
+		@Override
+		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+			// Here, you can checked selected items to adapt available actions
+			return false;
+		}
+
+		@Override
+		public void onDestroyActionMode(ActionMode mode) {
+			// Destroying action mode, let's unselect all items
+			for (int i = 0; i < filesListView.getAdapter().getCount(); i++)
+				filesListView.setItemChecked(i, false);
+
+			if (mode == mMode) {
+				mMode = null;
+			}
+		}
+
+		@Override
+		public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+			// Respond to clicks on the actions in the CAB
+			switch (item.getItemId()) {
+			case R.id.menu_delete:
+				deleteSelectedLogs();
+				mode.finish(); // Action picked, so close the CAB
+				return true;
+			case R.id.menu_selectall:
+				selectAll();
+				return true;
+			case R.id.menu_share:
+				shareSelectedLogs();
+				return true;
+			default:
+				return false;
+			}
+
+			// long[] selected = filesListView.getCheckedItemIds();
+			// if (selected.length > 0) {
+			// for (long id : selected) {
+			// // Do something with the selected item
+			// }
+			// }
+			// mode.finish();
+		}
+	};
 
 	@Override
 	public void onResume() {
@@ -108,9 +142,13 @@ public class FilesFragment extends SherlockFragment {
 	}
 
 	private void updateFilesList() {
-		allFiles = getActivity().getExternalFilesDir(null).listFiles();
+		allFiles = getSherlockActivity().getExternalFilesDir(null).listFiles();
 		filesAdapter.clear();
-		filesAdapter.addAll(allFiles);
+
+		// add all files; addAll requires API level > 11
+		for (File f : allFiles) {
+			filesAdapter.add(f);
+		}
 	}
 
 	private void deleteSelectedLogs() {
